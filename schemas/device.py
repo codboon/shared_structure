@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
-
-from app.schemas.work import WorkResponse
+from shared_structure.schemas.user import UserResponse
+from shared_structure.schemas.work import WorkResponse
 
 class DeviceBase(BaseModel):
     ip: str
@@ -13,28 +13,16 @@ class DeviceBase(BaseModel):
 class DeviceCreate(DeviceBase):
     id_user: int
 
+class DeviceUpdate(DeviceBase):
+    ip: Optional[str] = None
+    bonner_token: Optional[str] = None
+    name: Optional[str] = None
+    uptime: Optional[float] = None
+    status: Optional[bool] = None
+
 class DeviceResponse(DeviceBase):
     id: int
-    id_user: int
+    user: UserResponse
     works: List[WorkResponse] = []
+
     model_config = ConfigDict(from_attributes=True)
-
-class UptimeRequest(BaseModel):
-    device_id: int
-    uptime: float
-
-class UptimeResponse(BaseModel):
-    device_id: int
-    total_uptime: float
-
-class DeviceInfoRequest(DeviceBase):
-    id_user: int
-
-class RevenueCalculationRequest(BaseModel):
-    device_id: int
-    usage_time: float
-    rate_per_second: float
-
-class RevenueResponse(BaseModel):
-    device_id: int
-    calculated_revenue: float
