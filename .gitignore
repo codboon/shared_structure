@@ -1,0 +1,64 @@
+# Environnement virtuel
+env/
+venv/
+.venv/
+
+# Fichiers Python compilés
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Configurations de l'éditeur
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Fichiers spécifiques du système d'exploitation
+.DS_Store
+Thumbs.db
+
+# Configurations et fichiers sensibles
+.env
+*.env
+
+# Fichiers de logs
+*.log
+logs/
+
+# Fichiers de base de données
+*.sqlite3
+*.db
+
+# Dossiers de test/coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+
+# Caches de pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Caches de mypy
+.mypy_cache/
+
+# Fichiers générés par FastAPI ou Uvicorn
+instance/
+db.sqlite3
+app.db
+
+# Fichiers générés par Docker (si tu utilises Docker)
+docker-compose.override.yml
+
+# Dossier des migrations (si tu utilises Alembic)
+migrations/
+
+# Fichiers de JetBrains IDEs
+*.iml
