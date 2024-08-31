@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 from app.core.database import Base
+from datetime import datetime
+
 
 class User(Base):
     __tablename__ = "users"
@@ -17,8 +19,8 @@ class User(Base):
     expiration_date      = Column(DateTime, nullable=True)
     is_admin             = Column(Boolean, default=False)
     is_banned            = Column(Boolean, default=False)
-    created_at           = Column(DateTime, default=DateTime.utcnow)
-    updated_at           = Column(DateTime, onupdate=DateTime.utcnow)
+    created_at           = Column(DateTime, default=datetime.utcnow)
+    updated_at           = Column(DateTime, onupdate=datetime.utcnow)
     experience           = Column(Integer, default=0)
 
     roblox_id            = Column(String(255), nullable=True)
@@ -30,7 +32,7 @@ class User(Base):
     epic_games_token     = Column(String(255), nullable=True)
 
     # Relationships
-    transfers            = relationship("Transfer", back_populates="user")
+    orders            = relationship("Order", back_populates="user")
     devices              = relationship("Device", back_populates="user")
     ads                  = relationship("Ad", back_populates="user")
     studios              = relationship("Studio", back_populates="members")
@@ -45,13 +47,19 @@ class Game(Base):
     # Columns
     id                   = Column(Integer, primary_key=True, index=True)
     name                 = Column(String(255), nullable=False)
-    description          = Column(String(255), nullable=False)
+    description          = Column(String(500), nullable=False)
     image_url            = Column(String(255), nullable=False)
     link                 = Column(String(255), nullable=False)
     rating               = Column(Float, nullable=False)
 
+    visits               = Column(Integer, default=0)
+    plays                = Column(Integer, default=0)
+    ratings              = Column(Integer, default=0)
+
     # Relationships
     studio               = relationship("Studio", back_populates="games")
+    ads                  = relationship("Ad", back_populates="game")
+    reviews              = relationship("Review", back_populates="game")
     
 class Studio(Base):
     __tablename__        = "studios"
@@ -59,7 +67,7 @@ class Studio(Base):
     # Columns
     id                   = Column(Integer, primary_key=True, index=True)
     name                 = Column(String(255), nullable=False)
-    description          = Column(String(255), nullable=False)
+    description          = Column(String(800), nullable=False)
     image_url            = Column(String(255), nullable=False)
     link                 = Column(String(255), nullable=False)
     rating               = Column(Float, nullable=False)
@@ -78,12 +86,14 @@ class Review(Base):
     id                   = Column(Integer, primary_key=True, index=True)
     id_user              = Column(Integer, ForeignKey('users.id'))
     id_game              = Column(Integer, ForeignKey('games.id'))
+    id_ad                = Column(Integer, ForeignKey('ads.id'))
     rating               = Column(Float, nullable=False)
-    content              = Column(String(255), nullable=False)
+    content              = Column(String(500), nullable=False)
 
     # Relationships
     user                 = relationship("User", back_populates="reviews")
     game                 = relationship("Game", back_populates="reviews")
+    ad                   = relationship("Ad", back_populates="reviews")
 
 
 class Product(Base):
@@ -96,6 +106,7 @@ class Product(Base):
     image_url            = Column(String(255), nullable=False)
     price                = Column(Float, nullable=False)
     stock                = Column(Integer, nullable=False)
+    currency             = Column(String(255), nullable=False)
 
     # Relationships
     orders               = relationship("Order", back_populates="product")
@@ -132,11 +143,16 @@ class Ad(Base):
     start_date           = Column(DateTime, nullable=False)
     end_date             = Column(DateTime, nullable=True)
 
+    plays                = Column(Integer, default=0)
+    views                = Column(Integer, default=0)
+    visits               = Column(Integer, default=0)
+    ratings              = Column(Integer, default=0)
+
     # Relationships
     user                 = relationship("User", back_populates="ads")
     game                 = relationship("Game", back_populates="ads")
     studio               = relationship("Studio", back_populates="ads")
-
+    reviews              = relationship("Review", back_populates="ad")
 
 class Device(Base):
     __tablename__        = "devices"

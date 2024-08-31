@@ -1,8 +1,10 @@
 from pydantic import BaseModel, HttpUrl, ConfigDict
-from typing import List, Optional
-from shared_structure.schemas.game import GameResponse
-from shared_structure.schemas.ad import AdResponse 
-from shared_structure.schemas.user import UserResponse
+from typing import Optional, List
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from shared_structure.schemas.game import GameResponse
+    from shared_structure.schemas.ad import AdResponse
 
 class StudioBase(BaseModel):
     name: str
@@ -20,8 +22,7 @@ class StudioUpdate(StudioBase):
 
 class StudioResponse(StudioBase):
     id: int
-    games: List[GameResponse] = []
-    ads: List[AdResponse] = []
-    admins: List[UserResponse] = []
+    games: List["GameResponse"] = []
+    ads: List["AdResponse"] = []
 
     model_config = ConfigDict(from_attributes=True)

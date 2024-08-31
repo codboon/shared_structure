@@ -8,6 +8,7 @@ class ProductBase(BaseModel):
     image_url: HttpUrl
     price: float
     stock: int
+    currency: str
 
 class ProductCreate(ProductBase):
     pass

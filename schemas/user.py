@@ -1,12 +1,15 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime
-from shared_structure.schemas.device import DeviceResponse
-from shared_structure.schemas.transfer import TransferResponse
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from shared_structure.schemas.device import DeviceResponse
+    from shared_structure.schemas.order import OrderResponse
 
 class UserBase(BaseModel):
     email: str
-    username: str  # Aligner avec le modèle SQLAlchemy
+    username: str
     balance: float = 0.0
     token: Optional[str] = None
     refresh_token: Optional[str] = None
@@ -29,10 +32,19 @@ class UserCreate(UserBase):
 
 class UserResponse(UserBase):
     id: int
-    devices: List[DeviceResponse] = []
-    transfers: List[TransferResponse] = []
 
+    @property
+    def devices(self):
+        from shared_structure.schemas.device import DeviceResponse
+        return []
+
+    @property
+    def orders(self):
+        from shared_structure.schemas.order import OrderResponse
+        return []
+    
     model_config = ConfigDict(from_attributes=True)
+
 
 class UserLogin(BaseModel):
     email: str

@@ -1,9 +1,12 @@
 from pydantic import BaseModel, HttpUrl, ConfigDict
 from typing import Optional
 from datetime import datetime
-from shared_structure.schemas.user import UserResponse  
-from shared_structure.schemas.game import GameResponse  
-from shared_structure.schemas.studio import StudioResponse  
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from shared_structure.schemas.user import UserResponse  
+    from shared_structure.schemas.game import GameResponse  
+    from shared_structure.schemas.studio import StudioResponse  
 
 class AdBase(BaseModel):
     status: bool = True
@@ -32,8 +35,8 @@ class AdUpdate(AdBase):
 
 class AdResponse(AdBase):
     id: int
-    user: UserResponse
-    game: Optional[GameResponse] = None
-    studio: Optional[StudioResponse] = None
+    user: "UserResponse"
+    game: Optional["GameResponse"] = None
+    studio: Optional["StudioResponse"] = None
 
     model_config = ConfigDict(from_attributes=True)

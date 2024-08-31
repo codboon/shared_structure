@@ -1,7 +1,10 @@
 from pydantic import BaseModel, HttpUrl, ConfigDict
 from typing import Optional
-from shared_structure.schemas.studio import StudioResponse
 from datetime import datetime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from shared_structure.schemas.studio import StudioResponse
 
 class GameBase(BaseModel):
     name: str
@@ -18,6 +21,6 @@ class GameUpdate(GameBase):
 
 class GameResponse(GameBase):
     id: int
-    studio: Optional[StudioResponse] = None
+    studio: Optional["StudioResponse"] = None  # Utilisation de la chaîne de caractères pour retarder l'importation
 
     model_config = ConfigDict(from_attributes=True)
