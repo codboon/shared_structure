@@ -1,8 +1,15 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Table
 from sqlalchemy.orm import relationship, validates
 from app.core.database import Base
 from datetime import datetime
+from datetime import datetime, timezone
 
+
+association_table = Table(
+    'association', Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('studio_id', Integer, ForeignKey('studios.id'))
+)
 
 class User(Base):
     __tablename__ = "users"
@@ -19,8 +26,8 @@ class User(Base):
     expiration_date      = Column(DateTime, nullable=True)
     is_admin             = Column(Boolean, default=False)
     is_banned            = Column(Boolean, default=False)
-    created_at           = Column(DateTime, default=datetime.utcnow)
-    updated_at           = Column(DateTime, onupdate=datetime.utcnow)
+    created_at           = Column(DateTime, default=datetime.now(timezone.utc))
+    updated_at           = Column(DateTime, onupdate=datetime.now(timezone.utc))
     experience           = Column(Integer, default=0)
 
     roblox_id            = Column(String(255), nullable=True)
@@ -32,51 +39,56 @@ class User(Base):
     epic_games_token     = Column(String(255), nullable=True)
 
     # Relationships
-    orders            = relationship("Order", back_populates="user")
+    orders               = relationship("Order", back_populates="user")
     devices              = relationship("Device", back_populates="user")
     ads                  = relationship("Ad", back_populates="user")
-    studios              = relationship("Studio", back_populates="members")
     reviews              = relationship("Review", back_populates="user")
     orders               = relationship("Order", back_populates="user")
+    studios              = relationship("Studio", secondary=association_table, back_populates="admins")
 
 
 
 class Game(Base):
-    __tablename__        = "games"
+    __tablename__ = "games"
 
-    # Columns
-    id                   = Column(Integer, primary_key=True, index=True)
-    name                 = Column(String(255), nullable=False)
-    description          = Column(String(500), nullable=False)
-    image_url            = Column(String(255), nullable=False)
-    link                 = Column(String(255), nullable=False)
-    rating               = Column(Float, nullable=False)
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(String(500), nullable=False)
+    image_url = Column(String(255), nullable=False)
+    link = Column(String(255), nullable=False)
+    rating = Column(Float, nullable=False)
 
-    visits               = Column(Integer, default=0)
-    plays                = Column(Integer, default=0)
-    ratings              = Column(Integer, default=0)
+    visits = Column(Integer, default=0)
+    plays = Column(Integer, default=0)
+    ratings = Column(Integer, default=0)
 
-    # Relationships
-    studio               = relationship("Studio", back_populates="games")
-    ads                  = relationship("Ad", back_populates="game")
-    reviews              = relationship("Review", back_populates="game")
-    
+    # Ajout de la clé étrangère pour lier à la table studios
+    studio_id = Column(Integer, ForeignKey('studios.id'))
+
+    # Relation avec Studio
+    studio = relationship("Studio", back_populates="games")
+    ads = relationship("Ad", back_populates="game")
+    reviews = relationship("Review", back_populates="game")
+
 class Studio(Base):
-    __tablename__        = "studios"
+    __tablename__ = "studios"
 
-    # Columns
-    id                   = Column(Integer, primary_key=True, index=True)
-    name                 = Column(String(255), nullable=False)
-    description          = Column(String(800), nullable=False)
-    image_url            = Column(String(255), nullable=False)
-    link                 = Column(String(255), nullable=False)
-    rating               = Column(Float, nullable=False)
-    color                = Column(String(255), nullable=False)
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(String(800), nullable=False)
+    image_url = Column(String(255), nullable=False)
+    link = Column(String(255), nullable=False)
+    rating = Column(Float, nullable=False)
+    color = Column(String(255), nullable=False)
 
-    # Relationships
-    games                = relationship("Game", back_populates="studio")
-    ads                  = relationship("Ad", back_populates="studio")
-    admins               = relationship("User", back_populates="studios")
+    # Clé étrangère vers User (créateur)
+    creator_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+
+    # Relation inverse avec Game
+    games = relationship("Game", back_populates="studio")
+    admins = relationship("User", secondary=association_table, back_populates="studios")
+    creator = relationship("User")  # Pour représenter le créateur
+
 
 
 class Review(Base):
@@ -119,40 +131,40 @@ class Order(Base):
     id_user              = Column(Integer, ForeignKey('users.id'))
     id_product           = Column(Integer, ForeignKey('products.id'))
     date                 = Column(DateTime, nullable=False)
-    quantity             = Column(Integer, nullable=False)
     type                 = Column(String(255), nullable=False)
 
     # Relationships
     user                 = relationship("User", back_populates="orders")
     product              = relationship("Product", back_populates="orders")
 
-
 class Ad(Base):
     __tablename__ = "ads"
 
     # Columns
-    id                   = Column(Integer, primary_key=True, index=True)
-    id_user              = Column(Integer, ForeignKey("users.id"), nullable=False)
-    id_game              = Column(Integer, ForeignKey("games.id"), nullable=True)
-    id_studio            = Column(Integer, ForeignKey("studios.id"), nullable=True)
-    status               = Column(Boolean, default=True)
-    amount               = Column(Float, nullable=False)
-    link                 = Column(String(255), nullable=False)
-    title                = Column(String(255), nullable=False)
-    image_url            = Column(String(255), nullable=True)
-    start_date           = Column(DateTime, nullable=False)
-    end_date             = Column(DateTime, nullable=True)
+    id = Column(Integer, primary_key=True, index=True)
+    id_user = Column(Integer, ForeignKey("users.id"), nullable=False)
+    id_game = Column(Integer, ForeignKey("games.id"), nullable=True)
+    id_studio = Column(Integer, ForeignKey("studios.id"), nullable=False)
+    status = Column(Boolean, default=True)
+    amount = Column(Float, nullable=False)
+    link = Column(String(255), nullable=False)
+    title = Column(String(255), nullable=False)
+    image_url = Column(String(255), nullable=True)
+    start_date = Column(DateTime, default=datetime.now)
+    end_date = Column(DateTime, nullable=True)
 
-    plays                = Column(Integer, default=0)
-    views                = Column(Integer, default=0)
-    visits               = Column(Integer, default=0)
-    ratings              = Column(Integer, default=0)
+    # Assurez-vous que ces valeurs ont des valeurs par défaut de 0
+    plays = Column(Integer, default=0)
+    views = Column(Integer, default=0)
+    visits = Column(Integer, default=0)
+    ratings = Column(Integer, default=0)
+
 
     # Relationships
-    user                 = relationship("User", back_populates="ads")
-    game                 = relationship("Game", back_populates="ads")
-    studio               = relationship("Studio", back_populates="ads")
-    reviews              = relationship("Review", back_populates="ad")
+    user = relationship("User", back_populates="ads")
+    game = relationship("Game", back_populates="ads")
+    reviews = relationship("Review", back_populates="ad")
+
 
 class Device(Base):
     __tablename__        = "devices"
