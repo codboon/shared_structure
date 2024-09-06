@@ -1,16 +1,34 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Table
-from sqlalchemy.orm import relationship, validates
+# Importation des modules
+from sqlalchemy        import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Table, Enum
+from sqlalchemy.orm    import relationship
 from app.core.database import Base
-from datetime import datetime
-from datetime import datetime, timezone
+from datetime          import datetime
+from datetime          import datetime, timezone
+from enum              import Enum as PyEnum
 
 
+# Définir une énumération Python pour les statuts AD
+class AdStatus(PyEnum):
+    PENDING     = "pending"
+    IN_PROGRESS = "in_progress"
+    REJECTED    = "rejected"
+    PAUSED      = "paused"
+    TERMINATED  = "terminated"
+
+
+# Table d'association pour la relation many-to-many
 association_table = Table(
     'association', Base.metadata,
     Column('user_id', Integer, ForeignKey('users.id')),
-    Column('studio_id', Integer, ForeignKey('studios.id'))
+    Column('studio_id', Integer, ForeignKey('studios.id')),
+    Column('game_id', Integer, ForeignKey('games.id'))
 )
 
+
+
+###########################################################
+#                       USER                              #
+###########################################################
 class User(Base):
     __tablename__ = "users"
 
@@ -48,10 +66,13 @@ class User(Base):
 
 
 
+###########################################################
+#                       GAME                              #
+###########################################################
 class Game(Base):
     __tablename__ = "games"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id   = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
     description = Column(String(500), nullable=False)
     image_url = Column(String(255), nullable=False)
@@ -70,6 +91,10 @@ class Game(Base):
     ads = relationship("Ad", back_populates="game")
     reviews = relationship("Review", back_populates="game")
 
+
+###########################################################
+#                       STUDIO                            #
+###########################################################
 class Studio(Base):
     __tablename__ = "studios"
 
@@ -85,18 +110,21 @@ class Studio(Base):
     creator_id = Column(Integer, ForeignKey('users.id'), nullable=False)
 
     # Relation inverse avec Game
-    games = relationship("Game", back_populates="studio")
-    admins = relationship("User", secondary=association_table, back_populates="studios")
+    games   = relationship("Game", back_populates="studio")
+    admins  = relationship("User", secondary=association_table, back_populates="studios")
     creator = relationship("User")  # Pour représenter le créateur
 
 
 
+###########################################################
+#                      REVIEW                             #
+###########################################################
 class Review(Base):
     __tablename__        = "reviews"
 
     # Columns
     id                   = Column(Integer, primary_key=True, index=True)
-    id_user              = Column(Integer, ForeignKey('users.id'))
+    user_id              = Column(Integer, ForeignKey('users.id'))
     id_game              = Column(Integer, ForeignKey('games.id'))
     id_ad                = Column(Integer, ForeignKey('ads.id'))
     rating               = Column(Float, nullable=False)
@@ -108,6 +136,9 @@ class Review(Base):
     ad                   = relationship("Ad", back_populates="reviews")
 
 
+###########################################################
+#                      PRODUCT                            #
+###########################################################
 class Product(Base):
     __tablename__        = "products"
 
@@ -123,12 +154,17 @@ class Product(Base):
     # Relationships
     orders               = relationship("Order", back_populates="product")
 
+
+
+###########################################################
+#                      ORDER                              #
+###########################################################
 class Order(Base):
     __tablename__        = "orders"
 
     # Columns
     id                   = Column(Integer, primary_key=True, index=True)
-    id_user              = Column(Integer, ForeignKey('users.id'))
+    user_id              = Column(Integer, ForeignKey('users.id'))
     id_product           = Column(Integer, ForeignKey('products.id'))
     date                 = Column(DateTime, nullable=False)
     type                 = Column(String(255), nullable=False)
@@ -137,15 +173,19 @@ class Order(Base):
     user                 = relationship("User", back_populates="orders")
     product              = relationship("Product", back_populates="orders")
 
+
+
+###########################################################
+#                        AD                               #
+###########################################################
 class Ad(Base):
     __tablename__ = "ads"
 
     # Columns
     id = Column(Integer, primary_key=True, index=True)
-    id_user = Column(Integer, ForeignKey("users.id"), nullable=False)
-    id_game = Column(Integer, ForeignKey("games.id"), nullable=True)
-    id_studio = Column(Integer, ForeignKey("studios.id"), nullable=False)
-    status = Column(Boolean, default=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    game_id = Column(Integer, ForeignKey("games.id"), nullable=False)
+    status = Column(Enum(AdStatus), nullable=False, default=AdStatus.PENDING)
     amount = Column(Float, nullable=False)
     link = Column(String(255), nullable=False)
     title = Column(String(255), nullable=False)
@@ -153,10 +193,9 @@ class Ad(Base):
     start_date = Column(DateTime, default=datetime.now)
     end_date = Column(DateTime, nullable=True)
 
-    # Assurez-vous que ces valeurs ont des valeurs par défaut de 0
-    plays = Column(Integer, default=0)
-    views = Column(Integer, default=0)
-    visits = Column(Integer, default=0)
+    plays   = Column(Integer, default=0)
+    views   = Column(Integer, default=0)
+    visits  = Column(Integer, default=0)
     ratings = Column(Integer, default=0)
 
 
@@ -166,12 +205,16 @@ class Ad(Base):
     reviews = relationship("Review", back_populates="ad")
 
 
+
+###########################################################
+#                      DEVICE                             #
+###########################################################
 class Device(Base):
     __tablename__        = "devices"
 
     # Columns
     id                   = Column(Integer, primary_key=True, index=True)
-    id_user              = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id              = Column(Integer, ForeignKey("users.id"), nullable=False)
     ip                   = Column(String(255), nullable=False)
     bonner_token         = Column(String(255), nullable=True)
     name                 = Column(String(255), nullable=False)
@@ -183,6 +226,10 @@ class Device(Base):
     works                = relationship("Work", back_populates="device")
 
 
+
+###########################################################
+#                       WORK                              #
+###########################################################
 class Work(Base):
     __tablename__        = "works"
 

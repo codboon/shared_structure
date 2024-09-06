@@ -1,28 +1,94 @@
 from pydantic import BaseModel, EmailStr
+from pydantic.config import ConfigDict
 from typing import Optional, List
 from datetime import datetime
-from pydantic.config import ConfigDict
 
-# Shared schemas
+
+###########################################################
+#                       USER                              #
+###########################################################
+# BASE
 class UserBase(BaseModel):
     email: EmailStr
-    username: str
-    balance: Optional[float] = 0.0
     is_admin: Optional[bool] = False
-    is_banned: Optional[bool] = False
-    experience: Optional[int] = 0
 
+
+# CREATE
 class UserCreate(UserBase):
+    username: str
     password: str
 
+# TOKEN
+class Token(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
+
+# READ
 class UserOut(UserBase):
     id: int
+    email: str
+    username: str
+    balance: float
+    is_admin: bool
+    is_banned: bool
+    experience: int
     created_at: datetime
     updated_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+# UPDATE (patch)
+class UserUpdate(UserBase):
+    username: Optional[str]   = None
+    password: Optional[str]   = None
+    balance: Optional[float]  = None
+    is_admin: Optional[bool]  = None
+    is_banned: Optional[bool] = None
+    experience: Optional[int] = None
+
+# LOGIN
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
+
+###########################################################
+#                        AD                               #
+###########################################################
+class AdBase(BaseModel):
+    id_user: int
+    id_game: int
+
+class AdCreate(AdBase):
+    amount: float
+    link: str
+    title: str
+    image_url: Optional[str] = None
+
+class AdUpdate(AdBase):
+    pass
+
+class AdOut(AdBase):
+    id: int
+    status: str
+    amount: float
+    link: str
+    title: str
+    image_url: Optional[str] = None
+    start_date: datetime
+    end_date: Optional[datetime] = None
+    plays: int = 0
+    views: int = 0
+    visits: int = 0
+    ratings: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 
-# Game schemas
+
+###########################################################
+#                       GAME                              #
+###########################################################
 class GameBase(BaseModel):
     name: str
     description: str
@@ -42,7 +108,10 @@ class GameOut(GameBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-# Studio schemas
+
+###########################################################
+#                       STUDIO                            #
+###########################################################
 class StudioBase(BaseModel):
     name: str
     description: str
@@ -61,7 +130,10 @@ class StudioOut(StudioBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-# Review schemas
+
+###########################################################
+#                       REVIEW                            #
+###########################################################
 class ReviewBase(BaseModel):
     rating: float
     content: str
@@ -79,24 +151,54 @@ class ReviewOut(ReviewBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-# Product schemas
-class ProductBase(BaseModel):
+
+###########################################################
+#                      DEVICE                             #
+###########################################################
+class DeviceBase(BaseModel):
+    ip: str
+    bonner_token: Optional[str] = None
     name: str
-    description: str
-    image_url: str
-    price: float
-    stock: int
-    currency: str
+    uptime: float = 0.0
+    status: bool = True
 
-class ProductCreate(ProductBase):
-    pass
+class DeviceCreate(DeviceBase):
+    id_user: int
 
-class ProductOut(ProductBase):
+class DeviceUpdate(DeviceBase):
+    ip: Optional[str] = None
+    bonner_token: Optional[str] = None
+    name: Optional[str] = None
+    uptime: Optional[float] = None
+    status: Optional[bool] = None
+
+class DeviceResponse(DeviceBase):
     id: int
+    user: UserOut
 
     model_config = ConfigDict(from_attributes=True)
 
-# Order schemas
+###########################################################
+#                       WORK                              #
+###########################################################
+class WorkBase(BaseModel):
+    date: datetime
+    uptime_amount: float
+
+class WorkCreate(WorkBase):
+    id_device: int
+
+class WorkOut(WorkBase):
+    id: int
+    id_device: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+
+###########################################################
+#                       ORDER                             #
+###########################################################
 class OrderBase(BaseModel):
     date: datetime
     type: str
@@ -112,74 +214,22 @@ class OrderOut(OrderBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-# Ad schemas
-class AdBase(BaseModel):
-    amount: float
-    link: str
-    title: str
-    status: Optional[bool] = True
-    start_date: datetime
-    end_date: Optional[datetime] = None
 
-class AdCreate(BaseModel):
-    id_user: int
-    id_game: Optional[int] = None
-    id_studio: int
-    amount: float
-    link: str
-    title: str
-    image_url: Optional[str]  # Assure-toi que ce champ est bien défini
-    start_date: datetime
-    end_date: Optional[datetime]
-
-class AdOut(BaseModel):
-    id: int
-    id_user: int
-    id_game: Optional[int]
-    id_studio: int
-    amount: float
-    link: str
-    title: str
-    image_url: Optional[str]
-    start_date: datetime
-    end_date: Optional[datetime]
-
-    # Ajout des champs avec des valeurs par défaut de 0
-    plays: int = 0
-    views: int = 0
-    visits: int = 0
-    ratings: int = 0
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-# Device schemas
-class DeviceBase(BaseModel):
-    ip: str
-    bonner_token: Optional[str] = None
+###########################################################
+#                       PRODUCT                           #
+###########################################################
+class ProductBase(BaseModel):
     name: str
-    uptime: float
-    status: Optional[bool] = True
+    description: str
+    image_url: str
+    price: float
+    stock: int
+    currency: str
 
-class DeviceCreate(DeviceBase):
-    id_user: int
+class ProductCreate(ProductBase):
+    pass
 
-class DeviceOut(DeviceBase):
+class ProductOut(ProductBase):
     id: int
-    id_user: int
-
-    model_config = ConfigDict(from_attributes=True)
-
-# Work schemas
-class WorkBase(BaseModel):
-    date: datetime
-    uptime_amount: float
-
-class WorkCreate(WorkBase):
-    id_device: int
-
-class WorkOut(WorkBase):
-    id: int
-    id_device: int
 
     model_config = ConfigDict(from_attributes=True)
